@@ -1,14 +1,9 @@
 <template>
   <div class="about">
     <h1>メモの編集ページ</h1>
-    <!-- TODO あとでcssフレームワークとかで対処する -->
-    <div class="edit" style="display: flex; max-width: 500px; margin: 0 auto;">
-      <div class="list">
-        <ul v-for="(memo, key) in memos" :key="key">
-          <li><router-link :to="memoUrl(memo)" exact-active-class="current">{{title(memo)}}</router-link></li>
-        </ul>
-      </div>
-      <div>
+    <div class="edit">
+      <MemoList :memos="memos" @addMemo="addMemo" />
+      <div class="edit_area">
         <textarea name="" id="" cols="30" rows="10" v-if="memo" v-model="memo.content"></textarea>
       </div>
     </div>
@@ -19,13 +14,20 @@
   </div>
 </template>
 <script>
+import MemoList from '@/components/MemoList.vue'
+
 const STORAGE_KEY = 'memo'
 
 export default {
+  name: 'EditView',
+  components: {
+    MemoList
+  },
   data () {
     return {
       memos: [],
-      memo: null
+      memo: null,
+      memoId: 1
     }
   },
   beforeRouteUpdate (to, _from, next) {
@@ -36,9 +38,17 @@ export default {
     if (localStorage.getItem(STORAGE_KEY)) {
       this.memos = JSON.parse(localStorage.getItem(STORAGE_KEY))
       this.memo = this.memos.find(memo => memo.id === Number(this.$route.params.id))
+      this.memoId = Math.max(...this.memos.map(memo => memo.id)) + 1
     }
   },
   methods: {
+    addMemo () {
+      this.memos.push({
+        id: this.memoId,
+        content: '新規メモ'
+      })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.memos))
+    },
     updateMemo () {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.memos))
     },
@@ -50,19 +60,21 @@ export default {
       this.$router.push({
         name: 'home'
       })
-    },
-    title (memo) {
-      const str = memo.content
-      const index = str.indexOf('\n')
-      return index === -1 ? str : str.substr(0, index)
-    },
-    memoUrl (memo) {
-      return `/memos/${memo.id}`
     }
   }
 }
 </script>
 <style scoped>
+.edit {
+  display: flex;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.edit_area {
+  margin-left: 12px;
+}
+
 .list .current {
   color: #000;
   text-decoration: none;
